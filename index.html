@@ -1,0 +1,887 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>未来信号舱 001</title>
+  <style>
+    :root {
+      --page: oklch(14% 0.025 235);
+      --panel: oklch(19% 0.025 235);
+      --panel-2: oklch(23% 0.025 235);
+      --ink: oklch(93% 0.012 220);
+      --muted: oklch(70% 0.018 220);
+      --faint: oklch(54% 0.02 220);
+      --line: oklch(34% 0.026 235);
+      --line-strong: oklch(49% 0.07 196);
+      --accent: oklch(73% 0.11 190);
+      --accent-2: oklch(78% 0.12 148);
+      --warning: oklch(78% 0.12 72);
+      --ai: oklch(74% 0.13 210);
+      --brand: oklch(76% 0.12 160);
+      --visual: oklch(79% 0.13 70);
+      --product: oklch(76% 0.12 295);
+      --shadow: 0 24px 70px oklch(4% 0.02 235 / 0.35);
+      --radius: 10px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      min-height: 100vh;
+      margin: 0;
+      background:
+        linear-gradient(90deg, oklch(100% 0 0 / 0.035) 1px, transparent 1px),
+        linear-gradient(0deg, oklch(100% 0 0 / 0.028) 1px, transparent 1px),
+        var(--page);
+      background-size: 42px 42px, 42px 42px, auto;
+      color: var(--ink);
+      line-height: 1.55;
+      text-rendering: optimizeLegibility;
+    }
+    a { color: var(--accent); text-underline-offset: 3px; }
+    button, input { font: inherit; }
+    button {
+      min-height: 34px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: oklch(24% 0.026 235);
+      color: var(--ink);
+      cursor: pointer;
+      transition: transform 160ms ease-out, border-color 160ms ease-out, background 160ms ease-out, color 160ms ease-out;
+    }
+    button:hover { border-color: var(--accent); background: oklch(27% 0.035 225); transform: translateY(-1px); }
+    button:focus-visible, input:focus-visible, summary:focus-visible {
+      outline: 3px solid oklch(73% 0.11 190 / 0.32);
+      outline-offset: 2px;
+    }
+    .app {
+      width: min(1420px, calc(100% - 40px));
+      margin: 0 auto;
+      padding: 28px 0 56px;
+    }
+    .topbar {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 24px;
+      align-items: end;
+      padding: 18px 0 20px;
+      border-bottom: 1px solid var(--line);
+    }
+    .eyebrow {
+      margin: 0 0 8px;
+      color: var(--accent);
+      font-size: 0.78rem;
+      font-weight: 800;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+    h1 {
+      margin: 0;
+      color: var(--ink);
+      font-size: 2.8rem;
+      line-height: 1.05;
+      letter-spacing: 0;
+    }
+    .issue-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: flex-end;
+      max-width: 520px;
+    }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      min-height: 30px;
+      padding: 4px 10px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: oklch(21% 0.022 235);
+      color: var(--muted);
+      font-size: 0.78rem;
+      white-space: nowrap;
+    }
+    .pill.is-strong { border-color: var(--accent); color: var(--accent); font-weight: 800; }
+
+    .control-bar {
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 300px auto;
+      gap: 10px;
+      align-items: center;
+      margin: 18px 0;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: oklch(17% 0.025 235 / 0.94);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(14px);
+    }
+    .filters {
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      padding-bottom: 1px;
+    }
+    .filters button {
+      flex: 0 0 auto;
+      padding: 6px 10px;
+      color: var(--muted);
+    }
+    .filters button.is-active {
+      border-color: var(--accent);
+      background: oklch(28% 0.055 200);
+      color: var(--accent);
+      font-weight: 800;
+    }
+    .search {
+      width: 100%;
+      min-height: 36px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: oklch(12% 0.02 235);
+      color: var(--ink);
+      padding: 8px 10px;
+    }
+    .search::placeholder { color: var(--faint); }
+    .tool-buttons {
+      display: flex;
+      gap: 6px;
+      justify-content: flex-end;
+    }
+    .tool-buttons button { padding: 6px 10px; white-space: nowrap; }
+
+    .workspace {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 330px;
+      gap: 18px;
+      align-items: start;
+    }
+    main { display: grid; gap: 18px; min-width: 0; }
+    .rail { position: sticky; top: 78px; }
+    .panel {
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: oklch(18% 0.024 235 / 0.96);
+      box-shadow: var(--shadow);
+    }
+    .panel-head {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 16px 18px 12px;
+      border-bottom: 1px solid var(--line);
+      background: oklch(20% 0.026 235);
+    }
+    .panel h2 {
+      margin: 0;
+      font-size: 1.02rem;
+      line-height: 1.25;
+      letter-spacing: 0;
+    }
+    .panel-head p {
+      margin: 4px 0 0;
+      color: var(--muted);
+      font-size: 0.84rem;
+    }
+    .count {
+      color: var(--accent);
+      font-size: 0.8rem;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .ingest-panel { padding: 14px; }
+    .ingest-panel h2 { margin-bottom: 10px; }
+    .ingest-list {
+      display: grid;
+      gap: 10px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+    .ingest-list li {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px;
+      background: oklch(21% 0.025 235);
+    }
+    .ingest-list b {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 34px;
+      height: 26px;
+      margin-right: 6px;
+      border-radius: 6px;
+      background: oklch(30% 0.055 200);
+      color: var(--accent);
+    }
+    .ingest-list p {
+      margin: 8px 0 0;
+      color: var(--muted);
+      font-size: 0.84rem;
+    }
+
+    .signal-list, .priority-list { display: grid; gap: 0; }
+    .signal-card {
+      display: grid;
+      grid-template-columns: 70px minmax(0, 1fr);
+      gap: 14px;
+      padding: 18px;
+      border-bottom: 1px solid var(--line);
+      background: var(--panel);
+    }
+    .signal-card:last-child { border-bottom: 0; }
+    .signal-card:hover { background: oklch(21% 0.026 235); }
+    .signal-card[data-theme="ai"] .type-dot { background: var(--ai); }
+    .signal-card[data-theme="brand"] .type-dot { background: var(--brand); }
+    .signal-card[data-theme="visual"] .type-dot { background: var(--visual); }
+    .signal-card[data-theme="product"] .type-dot { background: var(--product); }
+    .code {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 48px;
+      height: 34px;
+      border: 1px solid var(--line-strong);
+      border-radius: 8px;
+      background: oklch(15% 0.025 235);
+      color: var(--accent);
+      font-weight: 900;
+      letter-spacing: 0.02em;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .signal-main { min-width: 0; }
+    .signal-kicker {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 6px;
+      color: var(--muted);
+      font-size: 0.78rem;
+    }
+    .type-dot {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      margin-right: 6px;
+      box-shadow: 0 0 14px currentColor;
+    }
+    .signal-title {
+      margin: 0;
+      font-size: 1.15rem;
+      line-height: 1.32;
+      letter-spacing: 0;
+    }
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 12px;
+    }
+    .info-cell {
+      min-height: 86px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px;
+      background: oklch(16% 0.023 235);
+    }
+    .info-label {
+      display: block;
+      margin-bottom: 4px;
+      color: var(--accent);
+      font-size: 0.74rem;
+      font-weight: 850;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .info-cell p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.88rem;
+    }
+    .tag-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 10px;
+    }
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      min-height: 24px;
+      padding: 3px 7px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      color: var(--muted);
+      background: oklch(22% 0.025 235);
+      font-size: 0.75rem;
+    }
+    .tag.good { color: var(--accent-2); border-color: oklch(61% 0.1 148); }
+    .tag.warn { color: var(--warning); border-color: oklch(61% 0.1 72); }
+    .tag.action { color: var(--accent); border-color: var(--line-strong); }
+    .action-row {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(92px, 1fr));
+      gap: 8px;
+      margin-top: 12px;
+    }
+    .action-row button {
+      padding: 6px 8px;
+      font-size: 0.82rem;
+      white-space: nowrap;
+    }
+    .action-row button.is-selected,
+    .action-row button[aria-pressed="true"] {
+      border-color: var(--accent);
+      background: oklch(31% 0.08 200);
+      color: var(--accent);
+      font-weight: 800;
+      box-shadow: inset 0 0 0 1px oklch(73% 0.11 190 / 0.38), 0 0 18px oklch(73% 0.11 190 / 0.18);
+    }
+    .signal-card.has-selection {
+      border-color: var(--line-strong);
+      background: oklch(20% 0.028 235);
+    }
+    details {
+      margin-top: 12px;
+      border-top: 1px solid var(--line);
+      padding-top: 10px;
+    }
+    summary {
+      width: fit-content;
+      cursor: pointer;
+      color: var(--accent);
+      font-size: 0.84rem;
+      font-weight: 800;
+    }
+    .evidence {
+      display: grid;
+      gap: 8px;
+      max-width: 84ch;
+      margin-top: 9px;
+      color: var(--muted);
+      font-size: 0.84rem;
+    }
+    .evidence b { color: var(--ink); }
+    .empty {
+      display: none;
+      padding: 24px 16px;
+      color: var(--muted);
+      text-align: center;
+    }
+    .toast {
+      position: fixed;
+      right: 18px;
+      bottom: 18px;
+      z-index: 10;
+      max-width: min(420px, calc(100% - 36px));
+      padding: 10px 12px;
+      border: 1px solid var(--line-strong);
+      border-radius: 8px;
+      background: oklch(14% 0.025 235);
+      color: var(--accent);
+      opacity: 0;
+      transform: translateY(8px);
+      pointer-events: none;
+      transition: opacity 180ms ease-out, transform 180ms ease-out;
+    }
+    .toast.show { opacity: 1; transform: translateY(0); }
+
+    @media (max-width: 1120px) {
+      .workspace { grid-template-columns: 1fr; }
+      .rail { position: static; }
+      .control-bar { grid-template-columns: 1fr; }
+      .tool-buttons { justify-content: flex-start; }
+    }
+    @media (max-width: 760px) {
+      .app { width: min(100% - 24px, 1420px); padding-top: 14px; }
+      .topbar { grid-template-columns: 1fr; align-items: start; }
+      .issue-meta { justify-content: flex-start; }
+      h1 { font-size: 2.1rem; }
+      .signal-card { grid-template-columns: 1fr; gap: 10px; }
+      .info-grid { grid-template-columns: 1fr; }
+      .action-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Signal Intelligence Brief</p>
+        <h1>未来信号舱</h1>
+      </div>
+      <div class="issue-meta" aria-label="本期信息">
+        <span class="pill is-strong">Issue 001</span>
+        <span class="pill">2026-06-17</span>
+        <span class="pill">12 Signals</span>
+        <span class="pill">AI / Brand / Visual / Product</span>
+      </div>
+    </header>
+
+    <div class="control-bar" aria-label="看板控制区">
+      <div class="filters" role="group" aria-label="按主题筛选">
+        <button type="button" class="is-active" data-filter="all">全部</button>
+        <button type="button" data-filter="ai">AI 未来</button>
+        <button type="button" data-filter="brand">品牌 / 增长</button>
+        <button type="button" data-filter="visual">广告 / 摄影 / 审美</button>
+        <button type="button" data-filter="product">产品 / 消费</button>
+      </div>
+      <input class="search" id="searchInput" type="search" placeholder="搜索编号、标题、关键词、来源" aria-label="搜索候选信号">
+      <div class="tool-buttons">
+        <button type="button" id="expandAll">展开来源</button>
+        <button type="button" id="collapseAll">收起来源</button>
+      </div>
+    </div>
+
+    <div class="workspace">
+      <main>
+        <section class="panel" aria-labelledby="featuredTitle">
+          <div class="panel-head">
+            <div>
+              <h2 id="featuredTitle">优先信号</h2>
+              <p>本期最值得进一步拆解或进入知识库候选的信号。</p>
+            </div>
+          </div>
+          <div class="priority-list" id="priorityList"></div>
+        </section>
+
+        <section class="panel" aria-labelledby="signalsTitle">
+          <div class="panel-head">
+            <div>
+              <h2 id="signalsTitle">其余信号</h2>
+              <p>已在优先信号中出现的内容不再重复展示，其余候选按行动价值排序。</p>
+            </div>
+            <span class="count" id="resultCount">0 条</span>
+          </div>
+          <div class="signal-list" id="signalList"></div>
+          <div class="empty" id="emptyState">没有匹配的信号。可以清空搜索，或切回“全部”。</div>
+        </section>
+      </main>
+
+      <aside class="rail" aria-label="建议入库">
+        <section class="panel ingest-panel">
+          <h2>建议入库</h2>
+          <ul class="ingest-list">
+            <li>
+              <span><b>A3</b><code>ai-agentic-commerce-and-payment-infrastructure</code></span>
+              <p>理由：支付网络开始为 agent 交易做接口，这比“AI 提效”更接近真实商业基础设施变化。</p>
+            </li>
+            <li>
+              <span><b>V1</b><code>brand-as-verification-mechanism</code></span>
+              <p>理由：品牌不只是表达价值观，而是承担验证、筛选和信任转译的角色。</p>
+            </li>
+            <li>
+              <span><b>V3</b><code>visual-authenticity-as-specificity</code></span>
+              <p>理由：AI 图像时代的真实感不再只是“自然”，而是由具体细节、痕迹和上下文建立。</p>
+            </li>
+          </ul>
+        </section>
+      </aside>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite">已复制</div>
+
+  <script>
+    const signals = [
+      {
+        id: "A1",
+        theme: "ai",
+        themeLabel: "AI 未来",
+        title: "Stanford 2026 AI Index",
+        sourceLevel: "S 级",
+        sourceNote: "原始机构年度报告，适合作为宏观趋势底盘。",
+        context: "Stanford HAI 的年度报告继续追踪模型能力、投资、应用、治理和社会影响。它不是单点新闻，而是判断 AI 年度变化的基准资料。",
+        insight: "AI 能力和产业采用继续加速，但治理、组织理解和落地能力没有同步跟上。",
+        relevance: "适合做部门 AI 讨论的共同背景，帮助区分模型能力进步和组织真正会用 AI 之间的差距。",
+        action: "建议暂存资料，作为年度背景库引用。",
+        links: [{ label: "Stanford HAI", url: "https://hai.stanford.edu/ai-index/2026-ai-index-report" }],
+        proves: "能证明 AI 能力、采用和治理之间存在不匹配。",
+        limits: "不能直接推出某个企业或设计部门该如何落地 AI。",
+        status: ["高可信", "基础资料"],
+        featured: false,
+        priority: 6
+      },
+      {
+        id: "A2",
+        theme: "ai",
+        themeLabel: "AI 未来",
+        title: "Google Search I/O 2026",
+        sourceLevel: "S 级",
+        sourceNote: "Google 官方产品发布，适合观察入口级产品变化。",
+        context: "Google 在搜索产品中继续推进 AI Mode、agentic search 和任务型能力。搜索不再只是返回网页，而是在尝试承担更长的用户决策链路。",
+        insight: "搜索入口正在从“给答案”转向“替用户继续行动”的 agent 入口。",
+        relevance: "对内容、品牌和视觉来说，未来被看见的方式会变化：不是只优化搜索结果，而是要被 agent 理解、引用和执行。",
+        action: "建议深挖，但优先级低于支付基础设施。",
+        links: [{ label: "Google Blog", url: "https://blog.google/products-and-platforms/products/search/search-io-2026/" }],
+        proves: "能证明主流入口产品正在 agent 化。",
+        limits: "不能证明用户会立刻大规模接受 agent 搜索。",
+        status: ["入口变化"],
+        featured: false,
+        priority: 5
+      },
+      {
+        id: "A3",
+        theme: "ai",
+        themeLabel: "AI 未来",
+        title: "Agentic Commerce 进入支付基础设施",
+        sourceLevel: "S 级",
+        sourceNote: "Visa 和 Mastercard 官方信息，可作为高可信商业基础设施信号。",
+        context: "Visa 与 OpenAI、Mastercard 的 Agent Pay 都指向同一件事：AI agent 不只停留在推荐和生成内容，而是开始进入授权、支付、结算和风控环节。",
+        insight: "AI 的价值判断不能只看效率，它正在从工具层进入交易层和基础设施层。",
+        relevance: "这会影响电商、内容、设计和增长的协作方式。未来用户可能不是直接看页面做决策，而是让 agent 代为筛选、比较、购买。",
+        action: "建议深挖并入库。",
+        links: [
+          { label: "Visa", url: "https://investor.visa.com/news/news-details/2026/Visa-Partners-with-OpenAI-to-Power-the-Next-Generation-of-AI-Commerce/default.aspx" },
+          { label: "Mastercard", url: "https://www.mastercard.com/us/en/news-and-trends/press/2026/june/mastercard-launches-agent-pay-for-machines.html" }
+        ],
+        proves: "能证明支付网络正在为 agent 参与交易做准备。",
+        limits: "不能证明消费者会快速放权给 AI 购物，也不能证明所有交易都会被 agent 接管。",
+        status: ["深挖", "入库候选", "高可信"],
+        featured: true,
+        priority: 1
+      },
+      {
+        id: "A4",
+        theme: "ai",
+        themeLabel: "AI 未来",
+        title: "Accenture Consumer Pulse 2026",
+        sourceLevel: "S 级",
+        sourceNote: "咨询公司调研，适合观察意愿，不适合直接当行为事实。",
+        context: "Accenture 的消费者研究显示，用户对 AI agent 参与选择、推荐和处理任务的兴趣正在提高，尤其是当选择成本变高时。",
+        insight: "用户愿意把部分认知负担交给 AI，但“愿意尝试”和“真实授权”之间还有距离。",
+        relevance: "适合用来讨论用户需求变化：设计不只面向人，也可能要面向人和 AI 共同构成的决策链。",
+        action: "建议暂存资料，等有真实行为数据再连接。",
+        links: [{ label: "Accenture", url: "https://www.accenture.com/us-en/insights/consulting/talk-my-ai-agent" }],
+        proves: "能证明消费者对 agent 代理决策存在兴趣。",
+        limits: "调研意愿不等于真实行为，也不能代表所有市场。",
+        status: ["意愿调研", "观察"],
+        featured: false,
+        priority: 8
+      },
+      {
+        id: "A5",
+        theme: "ai",
+        themeLabel: "AI 未来",
+        title: "AI coding agents fail at teamwork",
+        sourceLevel: "S 级",
+        sourceNote: "Stanford HAI 研究报道，适合作为多 agent 乐观叙事的反证材料。",
+        context: "这条材料提醒我们，多 agent 并不是把多个模型拼在一起就会自然协作。任务边界、上下文共享、冲突解决和验收机制才是关键。",
+        insight: "agent team 的难点在组织机制，不只在模型能力。",
+        relevance: "可以反向校验我们自己的多窗口协作：如果没有共享上下文、角色边界和审判者机制，agent 数量越多越可能制造噪音。",
+        action: "建议入库到 agent 协作机制相关页面。",
+        links: [{ label: "Stanford HAI", url: "https://hai.stanford.edu/news/ai-coding-agents-fail-at-teamwork" }],
+        proves: "能证明 multi-agent hype 需要流程校验。",
+        limits: "不能证明所有多 agent 系统都无效。",
+        status: ["反证", "组织机制"],
+        featured: false,
+        priority: 4
+      },
+      {
+        id: "A6",
+        theme: "ai",
+        themeLabel: "AI 未来",
+        title: "OpenAI Sora 停用",
+        sourceLevel: "S 级",
+        sourceNote: "OpenAI 官方帮助文档，能确认产品状态，但不能单独判断赛道趋势。",
+        context: "Sora 停用说明强模型产品也会受到成本、治理、产品迁移和战略节奏影响。AI 视频能力强，不等于某个产品形态会稳定存在。",
+        insight: "AI 产品化不是模型能力的直接投影，它还取决于成本结构、分发方式和责任边界。",
+        relevance: "对设计团队有提醒：不要只追单一工具，要保留工作流可迁移性和素材资产可迁移性。",
+        action: "建议暂存资料，后续和 Runway、Google、Adobe 视频工具赛道对照。",
+        links: [{ label: "OpenAI Help", url: "https://help.openai.com/en/articles/20001152-what-to-know-about-the-sora-discontinuation" }],
+        proves: "能证明 Sora 当前产品状态发生调整。",
+        limits: "不能证明 AI 视频赛道衰退。",
+        status: ["观察", "产品化"],
+        featured: false,
+        priority: 11
+      },
+      {
+        id: "B1",
+        theme: "brand",
+        themeLabel: "品牌 / 增长",
+        title: "IDEO IQ 2026",
+        sourceLevel: "S/A 级",
+        sourceNote: "IDEO 机构内容，适合观察设计和组织创新观点。",
+        context: "IDEO 的内容继续把 AI 放进创造性组织和业务增长的语境，而不是只讨论工具效率。它关心组织如何重新分配判断、协作和创造。",
+        insight: "AI 时代的增长议题，不只是更快做完原来的工作，而是重组工作本身。",
+        relevance: "适合连接我们之前聊的设计部门组织迭代：设计师、渲染师、AI 生图师都可能从执行链条进入视觉判断链条。",
+        action: "建议深挖，作为组织迭代话题的辅助材料。",
+        links: [{ label: "IDEO IQ", url: "https://www.ideo.com/iq" }],
+        proves: "能证明设计和创造性组织正在进入 AI 增长讨论。",
+        limits: "不能证明单一设计行为直接导致增长。",
+        status: ["组织", "设计价值"],
+        featured: false,
+        priority: 7
+      },
+      {
+        id: "V1",
+        theme: "visual",
+        themeLabel: "广告 / 摄影 / 审美",
+        title: "Vaseline Verified",
+        sourceLevel: "S/A 级",
+        sourceNote: "品牌案例页和代理商资料互相印证，适合做广告案例研究。",
+        context: "Vaseline 把社媒上的护肤 hacks 和偏方收拢到验证平台，用科学测试回应用户真实行为中的混乱信息。",
+        insight: "品牌可以不只是传播者，还可以成为验证机制和信任基础设施。",
+        relevance: "对视觉和品牌表达有启发：设计不是单纯做漂亮画面，而是把混乱认知转译成可信结构。",
+        action: "建议入库。",
+        links: [
+          { label: "Ogilvy", url: "https://www.ogilvy.com/work/vaseline-verified" },
+          { label: "WPP", url: "https://www.wpp.com/en/case-studies/ogilvy-mindshare-vaseline-verified" }
+        ],
+        proves: "能证明品牌可以把 UGC 混乱信息转成可信度资产。",
+        limits: "不能证明所有品牌都适合做 fact-check 平台。",
+        status: ["广告案例", "入库候选"],
+        featured: true,
+        priority: 2
+      },
+      {
+        id: "V2",
+        theme: "visual",
+        themeLabel: "广告 / 摄影 / 审美",
+        title: "The Periodic Fable",
+        sourceLevel: "S/A 级",
+        sourceNote: "品牌官方页面可确认案例表达，奖项和视频可作辅助。",
+        context: "The Ordinary 借用周期表这种熟悉的科学形式，反讽护肤行业里的伪科学叙事。它不是解释成分，而是在攻击一套夸张表达方式。",
+        insight: "创新常常是让熟悉的东西陌生化：周期表仍然熟悉，但语境一换，就变成品牌批判。",
+        relevance: "适合给设计团队做参考：视觉概念可以用“结构借用”完成品类教育和价值观表达。",
+        action: "建议深挖到“熟悉事物陌生化”的案例库。",
+        links: [{ label: "The Ordinary", url: "https://theordinary.com/en-us/the-periodic-fable.html" }],
+        proves: "能证明视觉隐喻可以承担品牌价值观和品类教育。",
+        limits: "不能证明反营销一定带来转化。",
+        status: ["陌生化", "品牌表达"],
+        featured: false,
+        priority: 3
+      },
+      {
+        id: "V3",
+        theme: "visual",
+        themeLabel: "广告 / 摄影 / 审美",
+        title: "真实感从自然转向具体",
+        sourceLevel: "S/A 级",
+        sourceNote: "Getty VisualGPS 属于视觉趋势资料，适合启发审美判断，但需要结合渠道验证。",
+        context: "Getty VisualGPS 2026 提示，AI 图像泛滥之后，人们对真实感的感知开始从“自然、干净、像照片”转向更具体的细节、痕迹和上下文。",
+        insight: "真实感不是画质问题，而是信息密度和具体性的组合。",
+        relevance: "对摄影、AI 生图和详情页视觉都有用：未来避免 AI 味，可能要增加真实细节、使用痕迹和场景逻辑。",
+        action: "建议深挖并入库。",
+        links: [{ label: "Getty VisualGPS", url: "https://www.gettyimages.com/visualgps/creative-trends/technology/2026-visual-trends-were-tracking" }],
+        proves: "能证明视觉行业正在重新定义 authenticity。",
+        limits: "不能证明某个渠道用户一定偏好这种风格。",
+        status: ["审美", "入库候选"],
+        featured: true,
+        priority: 2
+      },
+      {
+        id: "V4",
+        theme: "visual",
+        themeLabel: "广告 / 摄影 / 审美",
+        title: "World Press Photo 2026",
+        sourceLevel: "S 级",
+        sourceNote: "World Press Photo 官方竞赛资料，适合观察纪实摄影价值变化。",
+        context: "在 AI 图像越来越容易生成的背景下，纪实摄影的现场性、作者责任和伦理边界更突出。它与商业摄影不是同一目标，但会影响大众对真实影像的判断。",
+        insight: "AI 越强，真实影像的价值越可能从画面质量转向现场证明。",
+        relevance: "适合未来讨论 AI 图像伦理、真实感表达和品牌视觉里的证据感。",
+        action: "建议暂存资料。",
+        links: [{ label: "World Press Photo", url: "https://www.worldpressphoto.org/contest/2026" }],
+        proves: "能证明真实影像仍有社会记录与伦理价值。",
+        limits: "不能证明商业摄影应完全走纪实路线。",
+        status: ["观察", "影像伦理"],
+        featured: false,
+        priority: 10
+      },
+      {
+        id: "P1",
+        theme: "product",
+        themeLabel: "产品 / 消费",
+        title: "Pinterest Predicts 2026",
+        sourceLevel: "S 级",
+        sourceNote: "平台趋势报告，适合观察 Pinterest 搜索行为，不代表全市场。",
+        context: "Pinterest 的趋势预测来自平台搜索和收藏行为。它能捕捉审美、生活方式和消费兴趣的变化，但天然带有平台人群偏差。",
+        insight: "趋势疲劳下，用户可能更偏向舒适、真实和逃离感，而不是更刺激的视觉轰炸。",
+        relevance: "适合给审美和消费心理做弱信号补充，暂时不作为核心决策依据。",
+        action: "建议少推或暂存资料。",
+        links: [{ label: "Pinterest Predicts", url: "https://business.pinterest.com/pinterest-predicts/" }],
+        proves: "能证明 Pinterest 平台搜索行为中的趋势信号。",
+        limits: "不能代表全市场用户趋势。",
+        status: ["平台信号"],
+        featured: false,
+        priority: 12
+      }
+    ];
+
+    const themeLabels = { ai: "AI 未来", brand: "品牌 / 增长", visual: "广告 / 摄影 / 审美", product: "产品 / 消费" };
+    const actions = ["深挖", "入库", "暂存资料", "少推"];
+    const filterButtons = document.querySelectorAll("[data-filter]");
+    const signalList = document.getElementById("signalList");
+    const priorityList = document.getElementById("priorityList");
+    const resultCount = document.getElementById("resultCount");
+    const searchInput = document.getElementById("searchInput");
+    const emptyState = document.getElementById("emptyState");
+    const toast = document.getElementById("toast");
+    let activeFilter = "all";
+    const selectedActions = new Map();
+
+    function tagClass(label) {
+      if (label.includes("入库") || label.includes("深挖")) return "tag action";
+      if (label.includes("意愿") || label.includes("平台")) return "tag warn";
+      if (label.includes("高可信") || label.includes("S")) return "tag good";
+      return "tag";
+    }
+
+    function linkText(links) {
+      return links.map((link) => `<a href="${link.url}" target="_blank" rel="noreferrer">${link.label}</a>`).join(" / ");
+    }
+
+    function actionButtons(signal) {
+      return actions.map((action) => {
+        const command = `${signal.id} ${action}`;
+        const selected = selectedActions.get(signal.id) === action;
+        return `<button type="button" class="${selected ? "is-selected" : ""}" data-signal-id="${signal.id}" data-action="${action}" data-copy="${command}" aria-pressed="${selected ? "true" : "false"}">${action}</button>`;
+      }).join("");
+    }
+
+    function cardTemplate(signal) {
+      return `
+        <article class="signal-card" data-card-id="${signal.id}" data-theme="${signal.theme}">
+          <div><span class="code">${signal.id}</span></div>
+          <div class="signal-main">
+            <div class="signal-kicker">
+              <span><span class="type-dot"></span>${themeLabels[signal.theme]}</span>
+              <span>${signal.sourceLevel}</span>
+              <span>${signal.sourceNote}</span>
+            </div>
+            <h3 class="signal-title">${signal.title}</h3>
+            <div class="info-grid">
+              <div class="info-cell"><span class="info-label">发生了什么</span><p>${signal.context}</p></div>
+              <div class="info-cell"><span class="info-label">关键判断</span><p>${signal.insight}</p></div>
+              <div class="info-cell"><span class="info-label">对我们有什么用</span><p>${signal.relevance}</p></div>
+              <div class="info-cell"><span class="info-label">建议动作</span><p>${signal.action}</p></div>
+            </div>
+            <div class="tag-row">${signal.status.map((item) => `<span class="${tagClass(item)}">${item}</span>`).join("")}</div>
+            <div class="action-row">${actionButtons(signal)}</div>
+            <details>
+              <summary>来源与边界</summary>
+              <div class="evidence">
+                <span><b>链接：</b>${linkText(signal.links)}</span>
+                <span><b>能证明：</b>${signal.proves}</span>
+                <span><b>不能证明：</b>${signal.limits}</span>
+              </div>
+            </details>
+          </div>
+        </article>
+      `;
+    }
+
+    function renderPriority() {
+      const featured = signals.filter((signal) => signal.featured).sort((a, b) => a.priority - b.priority);
+      priorityList.innerHTML = featured.map(cardTemplate).join("");
+      syncAllSelections();
+    }
+
+    function renderSignals() {
+      const query = searchInput.value.trim().toLowerCase();
+      const filtered = signals
+        .filter((signal) => !signal.featured)
+        .filter((signal) => activeFilter === "all" || signal.theme === activeFilter)
+        .filter((signal) => {
+          if (!query) return true;
+          const linkLabels = signal.links.map((link) => link.label).join(" ");
+          return [
+            signal.id,
+            signal.title,
+            signal.themeLabel,
+            signal.sourceLevel,
+            signal.sourceNote,
+            signal.context,
+            signal.insight,
+            signal.relevance,
+            signal.action,
+            signal.status.join(" "),
+            linkLabels
+          ].join(" ").toLowerCase().includes(query);
+        })
+        .sort((a, b) => a.priority - b.priority);
+
+      resultCount.textContent = `${filtered.length} 条`;
+      emptyState.style.display = filtered.length ? "none" : "block";
+      signalList.innerHTML = filtered.map(cardTemplate).join("");
+      syncAllSelections();
+    }
+
+    function setSelectedAction(signalId, action) {
+      selectedActions.set(signalId, action);
+      syncSelection(signalId);
+    }
+
+    function syncSelection(signalId) {
+      document.querySelectorAll(`[data-signal-id="${signalId}"]`).forEach((button) => {
+        const selected = selectedActions.get(signalId) === button.dataset.action;
+        button.classList.toggle("is-selected", selected);
+        button.setAttribute("aria-pressed", selected ? "true" : "false");
+      });
+      document.querySelectorAll(`[data-card-id="${signalId}"]`).forEach((card) => {
+        card.classList.toggle("has-selection", selectedActions.has(signalId));
+      });
+    }
+
+    function syncAllSelections() {
+      selectedActions.forEach((_, signalId) => syncSelection(signalId));
+    }
+
+    async function copyText(text) {
+      try {
+        await navigator.clipboard.writeText(text);
+        showToast(`已复制：${text}`);
+      } catch (error) {
+        showToast(text);
+      }
+    }
+
+    function showToast(text) {
+      toast.textContent = text;
+      toast.classList.add("show");
+      window.setTimeout(() => toast.classList.remove("show"), 1800);
+    }
+
+    filterButtons.forEach((button) => {
+      button.addEventListener("click", () => {
+        filterButtons.forEach((item) => item.classList.remove("is-active"));
+        button.classList.add("is-active");
+        activeFilter = button.dataset.filter;
+        renderSignals();
+      });
+    });
+
+    document.addEventListener("click", (event) => {
+      const copyButton = event.target.closest("[data-copy]");
+      if (copyButton) {
+        if (copyButton.dataset.signalId && copyButton.dataset.action) {
+          setSelectedAction(copyButton.dataset.signalId, copyButton.dataset.action);
+        }
+        copyText(copyButton.dataset.copy);
+      }
+    });
+
+    searchInput.addEventListener("input", renderSignals);
+    document.getElementById("expandAll").addEventListener("click", () => {
+      document.querySelectorAll(".signal-card details").forEach((detail) => { detail.open = true; });
+    });
+    document.getElementById("collapseAll").addEventListener("click", () => {
+      document.querySelectorAll(".signal-card details").forEach((detail) => { detail.open = false; });
+    });
+
+    renderPriority();
+    renderSignals();
+  </script>
+</body>
+</html>
