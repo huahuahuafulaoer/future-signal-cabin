@@ -59,7 +59,7 @@
     .app {
       width: min(1420px, calc(100% - 40px));
       margin: 0 auto;
-      padding: 28px 0 56px;
+      padding: 28px 0 230px;
     }
     .topbar {
       display: grid;
@@ -352,6 +352,67 @@
       border-color: var(--line-strong);
       background: oklch(20% 0.028 235);
     }
+    .feedback-dock {
+      position: fixed;
+      left: 50%;
+      bottom: 16px;
+      z-index: 8;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 12px;
+      width: min(920px, calc(100% - 28px));
+      padding: 12px;
+      border: 1px solid var(--line-strong);
+      border-radius: var(--radius);
+      background: oklch(15% 0.027 235 / 0.96);
+      box-shadow: 0 18px 60px oklch(4% 0.02 235 / 0.5);
+      transform: translateX(-50%);
+      backdrop-filter: blur(16px);
+    }
+    .feedback-head {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+    .feedback-head h2 {
+      margin: 0;
+      font-size: 0.95rem;
+      letter-spacing: 0;
+    }
+    .feedback-count {
+      color: var(--accent);
+      font-size: 0.78rem;
+      font-weight: 850;
+    }
+    .review-output {
+      min-height: 56px;
+      max-height: 78px;
+      margin: 0;
+      overflow: auto;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 8px;
+      background: oklch(11% 0.025 235);
+      color: var(--muted);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.76rem;
+      white-space: pre-wrap;
+    }
+    .feedback-actions {
+      display: grid;
+      gap: 8px;
+      align-content: center;
+      min-width: 150px;
+    }
+    .feedback-actions .primary {
+      border-color: var(--accent);
+      background: oklch(31% 0.08 200);
+      color: var(--accent);
+      font-weight: 850;
+    }
     details {
       margin-top: 12px;
       border-top: 1px solid var(--line);
@@ -404,13 +465,15 @@
       .tool-buttons { justify-content: flex-start; }
     }
     @media (max-width: 760px) {
-      .app { width: min(100% - 24px, 1420px); padding-top: 14px; }
+      .app { width: min(100% - 24px, 1420px); padding-top: 14px; padding-bottom: 300px; }
       .topbar { grid-template-columns: 1fr; align-items: start; }
       .issue-meta { justify-content: flex-start; }
       h1 { font-size: 2.1rem; }
       .signal-card { grid-template-columns: 1fr; gap: 10px; }
       .info-grid { grid-template-columns: 1fr; }
       .action-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .feedback-dock { grid-template-columns: 1fr; bottom: 10px; }
+      .feedback-actions { grid-template-columns: 1fr 1fr; min-width: 0; }
     }
   </style>
 </head>
@@ -490,6 +553,21 @@
       </aside>
     </div>
   </div>
+
+  <section class="feedback-dock" id="feedbackDock" aria-label="反馈出口">
+    <div>
+      <div class="feedback-head">
+        <h2>反馈出口</h2>
+        <span class="feedback-count" id="feedbackCount">已选择 0 条</span>
+      </div>
+      <pre class="review-output" id="reviewOutput">未来信号舱 Issue 001 评审反馈
+暂无选择。</pre>
+    </div>
+    <div class="feedback-actions">
+      <button type="button" class="primary" id="copyReviewSummary">复制评审结果</button>
+      <button type="button" id="clearReview">清空选择</button>
+    </div>
+  </section>
 
   <div class="toast" id="toast" role="status" aria-live="polite">已复制</div>
 
@@ -728,6 +806,11 @@
     const searchInput = document.getElementById("searchInput");
     const emptyState = document.getElementById("emptyState");
     const toast = document.getElementById("toast");
+    const feedbackCount = document.getElementById("feedbackCount");
+    const reviewOutput = document.getElementById("reviewOutput");
+    const copyReviewSummary = document.getElementById("copyReviewSummary");
+    const clearReview = document.getElementById("clearReview");
+    const storageKey = `future-signal-cabin-review:${document.title}`;
     let activeFilter = "all";
     const selectedActions = new Map();
 
@@ -820,7 +903,9 @@
 
     function setSelectedAction(signalId, action) {
       selectedActions.set(signalId, action);
+      persistSelections();
       syncSelection(signalId);
+      updateFeedbackDock();
     }
 
     function syncSelection(signalId) {
@@ -838,10 +923,63 @@
       selectedActions.forEach((_, signalId) => syncSelection(signalId));
     }
 
-    async function copyText(text) {
+    function clearSelectionUI() {
+      document.querySelectorAll(".action-row button").forEach((button) => {
+        button.classList.remove("is-selected");
+        button.setAttribute("aria-pressed", "false");
+      });
+      document.querySelectorAll(".signal-card").forEach((card) => {
+        card.classList.remove("has-selection");
+      });
+    }
+
+    function restoreSelections() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(storageKey) || "[]");
+        saved.forEach(([signalId, action]) => {
+          if (signals.some((signal) => signal.id === signalId) && actions.includes(action)) {
+            selectedActions.set(signalId, action);
+          }
+        });
+      } catch (error) {
+        selectedActions.clear();
+      }
+    }
+
+    function persistSelections() {
+      localStorage.setItem(storageKey, JSON.stringify([...selectedActions.entries()]));
+    }
+
+    function buildReviewSummary() {
+      const ordered = [...selectedActions.entries()]
+        .sort(([idA], [idB]) => {
+          const a = signals.find((signal) => signal.id === idA)?.priority ?? 999;
+          const b = signals.find((signal) => signal.id === idB)?.priority ?? 999;
+          return a - b;
+        })
+        .map(([signalId, action]) => {
+          const signal = signals.find((item) => item.id === signalId);
+          return `${signalId} ${action}${signal ? `｜${signal.title}` : ""}`;
+        });
+
+      return [
+        "未来信号舱 Issue 001 评审反馈",
+        "",
+        ordered.length ? ordered.join("\n") : "暂无选择。",
+        "",
+        "补充意见："
+      ].join("\n");
+    }
+
+    function updateFeedbackDock() {
+      feedbackCount.textContent = `已选择 ${selectedActions.size} 条`;
+      reviewOutput.textContent = buildReviewSummary();
+    }
+
+    async function copyText(text, label = text) {
       try {
         await navigator.clipboard.writeText(text);
-        showToast(`已复制：${text}`);
+        showToast(`已复制：${label}`);
       } catch (error) {
         showToast(text);
       }
@@ -872,6 +1010,18 @@
       }
     });
 
+    copyReviewSummary.addEventListener("click", () => {
+      copyText(buildReviewSummary(), "评审结果");
+    });
+
+    clearReview.addEventListener("click", () => {
+      selectedActions.clear();
+      localStorage.removeItem(storageKey);
+      clearSelectionUI();
+      updateFeedbackDock();
+      showToast("已清空评审选择");
+    });
+
     searchInput.addEventListener("input", renderSignals);
     document.getElementById("expandAll").addEventListener("click", () => {
       document.querySelectorAll(".signal-card details").forEach((detail) => { detail.open = true; });
@@ -880,8 +1030,10 @@
       document.querySelectorAll(".signal-card details").forEach((detail) => { detail.open = false; });
     });
 
+    restoreSelections();
     renderPriority();
     renderSignals();
+    updateFeedbackDock();
   </script>
 </body>
 </html>
